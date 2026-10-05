@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes applications</title>
+<style>
+:root{--bg:#eef2f7;--card:#fff;--txt:#0f172a;--mut:#64748b;--line:#e2e8f0;--acc:#0ea5e9;--acc2:#0284c7;--chip:#f1f5f9}
+:root[data-theme=dark]{--bg:#0b1220;--card:#131c2e;--txt:#e5edf8;--mut:#93a4bd;--line:#223049;--chip:#1a2538}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:"Segoe UI",system-ui,sans-serif;padding:24px}
+.wrap{max-width:1200px;margin:auto}
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 4px 14px rgba(15,23,42,.08);padding:18px 22px;margin-bottom:20px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-size:24px}
+h1{font-size:20px;margin:0;flex:1;min-width:180px}
+input[type=search]{padding:11px 14px;border-radius:12px;border:2px solid var(--line);background:var(--chip);color:var(--txt);font-size:14px;min-width:220px}
+button{font:inherit;cursor:pointer}
+.btn{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:0;border-radius:12px;padding:11px 20px;font-weight:600}
+.btn.off{background:var(--chip);color:var(--txt);border:1px solid var(--line)}
+.ico-btn{background:var(--chip);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:10px 12px}
+nav{display:flex;gap:10px;flex-wrap:wrap}
+.tab{background:var(--chip);color:var(--mut);border:2px solid var(--line);border-radius:999px;padding:9px 20px}
+.tab.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+h2{font-size:18px;margin:6px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+.app{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:10px;color:inherit;text-decoration:none;position:relative}
+.app:hover,.app:focus-visible{border-color:var(--acc);outline:none;box-shadow:0 6px 18px rgba(14,165,233,.18)}
+.top{display:flex;justify-content:space-between;align-items:flex-start}
+.ai{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:24px;color:#fff}
+.star{width:40px;height:40px;border-radius:10px;border:0;background:var(--chip);color:var(--mut);font-size:18px}
+.star.on{color:#f59e0b}
+.app h3{margin:6px 0 0;font-size:18px}
+.app p{margin:0;color:var(--mut);font-size:14px;min-height:40px}
+.url{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:12px ui-monospace,Consolas,monospace;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{align-self:flex-start;background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:12px}
+.empty{color:var(--mut);padding:30px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="box">
+    <div class="logo">📦</div>
+    <h1 id="titre">Mes applications</h1>
+    <input type="search" id="q" placeholder="Rechercher une application" aria-label="Rechercher une application">
+    <button class="ico-btn" id="theme" title="Mode sombre" aria-label="Changer de thème">🌓</button>
+    <button class="btn off" id="fav">★ Favoris</button>
+  </header>
+  <nav class="box" id="tabs"></nav>
+  <h2 id="cat"></h2>
+  <main class="grid" id="grid"></main>
+</div>
+
+<script>
+/* ====== À MODIFIER : vos applications ======
+   cat = catégorie (onglet), icon = emoji, color = couleur de l'icône
+   Remplacez les URL par les adresses réelles de vos pages GitHub. */
+const TITRE = "Mes applications";
+const APPS = [
+  {name:"Affiches Food", desc:"Affiches du rayon vrac et food", url:"https://mtara555.github.io/affiches-food-08/", cat:"Affichage", icon:"🥖", color:"#ea580c"},
+  {name:"Affiches EM", desc:"Générateur d'affiches prix du rayon électroménager", url:"https://mtara555.github.io/AFFICHES-EM_v1.0/", cat:"Affichage", icon:"🏷️", color:"#dc2626"},
+  {name:"BadgeMaster Pro", desc:"Gestion professionnelle de badges", url:"https://mtara555.github.io/BadgeMasterPro-matara/", cat:"Affichage", icon:"🪪", color:"#7c3aed"},
+  {name:"Planning Tanger", desc:"Planning du personnel du magasin", url:"https://mtarabet72.github.io/planning-pwa-tanger/", cat:"Équipes", icon:"📅", color:"#16a34a"},
+  {name:"HyperExcellence", desc:"Application HyperExcellence", url:"https://mtarabet72.github.io/HyperExcellence/", cat:"Pilotage", icon:"🎯", color:"#0ea5e9"}
+];
+/* ============================================ */
+
+const $ = s => document.querySelector(s);
+const ls = {get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+let favs = new Set(ls.get("favs",[])), cat = "Toutes", onlyFav = false, query = "";
+const cats = ["Toutes", ...new Set(APPS.map(a=>a.cat))];
+document.title = $("#titre").textContent = TITRE;
+
+function setTheme(t){document.documentElement.dataset.theme=t;ls.set("theme",t)}
+setTheme(ls.get("theme", matchMedia("(prefers-color-scheme:dark)").matches ? "dark" : "light"));
+$("#theme").onclick = () => setTheme(document.documentElement.dataset.theme==="dark" ? "light" : "dark");
+
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function render(){
+  $("#tabs").innerHTML = cats.map(c=>`<button class="tab ${c===cat?"on":""}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+  $("#fav").className = "btn" + (onlyFav ? "" : " off");
+  $("#cat").textContent = onlyFav ? "Favoris" : (cat==="Toutes" ? "Toutes les applications" : cat);
+  const q = query.toLowerCase();
+  const list = APPS.filter(a =>
+    (cat==="Toutes" || a.cat===cat) && (!onlyFav || favs.has(a.name)) &&
+    (a.name+" "+a.desc+" "+a.url).toLowerCase().includes(q));
+  $("#grid").innerHTML = list.length ? list.map(a=>`
+    <a class="app" href="${esc(a.url)}" target="_blank" rel="noopener">
+      <div class="top">
+        <div class="ai" style="background:${a.color}">${a.icon}</div>
+        <button class="star ${favs.has(a.name)?"on":""}" data-n="${esc(a.name)}" aria-label="Ajouter aux favoris">★</button>
+      </div>
+      <h3>${esc(a.name)}</h3><p>${esc(a.desc)}</p>
+      <div class="url">${esc(a.url)}</div><span class="tag">${esc(a.cat)}</span>
+    </a>`).join("") : `<div class="empty">Aucune application trouvée.</div>`;
+}
+
+$("#tabs").onclick = e => { const b=e.target.closest(".tab"); if(b){cat=b.dataset.c;render()} };
+$("#fav").onclick = () => { onlyFav=!onlyFav; render() };
+$("#q").oninput = e => { query=e.target.value; render() };
+$("#grid").onclick = e => {
+  const s = e.target.closest(".star"); if(!s) return;
+  e.preventDefault();
+  favs.has(s.dataset.n) ? favs.delete(s.dataset.n) : favs.add(s.dataset.n);
+  ls.set("favs",[...favs]); render();
+};
+render();
+</script>
+</body>
+</html>
